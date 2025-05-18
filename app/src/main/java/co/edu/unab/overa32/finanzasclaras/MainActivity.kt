@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -19,13 +20,20 @@ import co.edu.unab.overa32.finanzasclaras.ui.theme.FinanzasClarasTheme
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-
+data class Alert(
+    val amount: Double,
+    val enabled: Boolean
+)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val alerts = mutableStateListOf<Alert>()
+        var totalAmount by mutableStateOf(0.0)
+        var currentAmount by mutableStateOf(0.0)
         setContent {
             FinanzasClarasTheme {
+
                 val myNavController = rememberNavController()
                 val myStartDestination = "main"
                 val context = LocalContext.current
@@ -52,12 +60,22 @@ class MainActivity : ComponentActivity() {
                     composable("gastos") {
                         MainScreenWithState()
                     }
-                    composable("alertas") {
-                        AlertasScreen(
+                    composable("alerts") {
+                        AlertScreen(
                             myNavController,
-                            onBackClick = { myNavController.popBackStack() },
-                            onAddAlertClick = {}) { }
+                            alertList = alerts,
+                            totalAmount = totalAmount,
+                            currentAmount = currentAmount,
+                            onAddAlert = { newAmount ->
+                                alerts.add(Alert(newAmount, true))
+                            },
+                            onToggleAlert = { index ->
+                                alerts[index] = alerts[index].copy(enabled = !alerts[index].enabled)
+                            }
+                        )
                     }
+                    
+
                     composable("ajustes") {
                         AjustesScreen(
                             myNavController,
@@ -69,7 +87,7 @@ class MainActivity : ComponentActivity() {
                     composable("tablaGastos") {
                         TablaGastosScreen(myNavController) { nuevoSaldo ->
                             saldo = nuevoSaldo
-                            myNavController.navigate("alertas")
+                            myNavController.navigate("alerts")
                         }
                     }
                 }
